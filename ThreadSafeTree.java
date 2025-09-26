@@ -79,11 +79,33 @@ public class ThreadSafeTree {
         pivotNode.parent = leftChild;
     }
 
+    private RBNode findNode(byte[] key) {
+        RBNode currentNode = root;
+        while (currentNode != NIL) {
+            int comparison = Arrays.compare(key, currentNode.key);
+            if (comparison == 0) {
+                return currentNode;
+            } else if (comparison < 0) {
+                currentNode = currentNode.left;
+            } else {
+                currentNode = currentNode.right;
+            }
+        }
+        return NIL;
+    }
+
     public synchronized void insert(byte[] key, byte[] value) {
         if (key == null) return;
 
+        //checking if key already exists
+        RBNode existingNode = findNode(key);
+        if (existingNode != NIL) {
+            existingNode.value = Arrays.copyOf(value, value.length);
+            return;
+        }
+
         RBNode newNode = new RBNode(Arrays.copyOf(key, key.length),
-                Arrays.copyOf(value, value.length));
+                value == null ? null : Arrays.copyOf(value, value.length));
         newNode.left = NIL;
         newNode.right = NIL;
 
