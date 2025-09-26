@@ -21,16 +21,18 @@ public class ThreadSafeTree {
     }
 
     private RBNode root;
-    private final RBNode NIL;
+    private static final RBNode NIL = createNilNode();
 
-    public ThreadSafeTree(byte[] key, byte[] value) {
-        if (key == null)
-            throw new RuntimeException("Key value is null");
+    private static RBNode createNilNode() {
+        RBNode nil = new RBNode(null, null);
+        nil.color = Color.BLACK;
+        nil.left = nil;
+        nil.right = nil;
+        return nil;
+    }
 
-        NIL = new RBNode(null, null);
-        NIL.color = Color.BLACK;
+    public ThreadSafeTree() {
         root = NIL;
-        insert(key, value);
     }
 
     private void leftRotate(RBNode node) {
@@ -155,25 +157,20 @@ public class ThreadSafeTree {
         root.color = Color.BLACK;
     }
 
-    public synchronized byte[] get(byte[] key){
-        if (root == null)
-        {
-            return null;
-        }
-        else if (Arrays.equals(root.key, key))
-        {
-            return root.value;
-        }
+    public synchronized byte[] get(byte[] key) {
+        if (key == null) return null;
 
-        RBNode node = root;
-        while (!Arrays.equals(node.key, key)) {
-            if (Arrays.compare(key, root.key) < 0)
-                node = node.left;
-            else
-                node = node.right;
+        RBNode current = root;
+        while (current != NIL) {
+            int cmp = Arrays.compare(key, current.key);
+            if (cmp == 0) {
+                return Arrays.copyOf(current.value, current.value.length);
+            } else if (cmp < 0) {
+                current = current.left;
+            } else {
+                current = current.right;
+            }
         }
-
-        return node.value;
-
+        return null;
     }
 }
