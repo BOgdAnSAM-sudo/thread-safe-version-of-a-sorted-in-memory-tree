@@ -35,71 +35,77 @@ public class ThreadSafeTree {
         root = NIL;
     }
 
-    private void leftRotate(RBNode node) {
-        RBNode parent = node.right;
-        node.right = parent.left;
-        if (parent.left == NIL) {
-            parent.left.parent = node;
+    private void leftRotate(RBNode pivotNode) {
+        RBNode rightChild = pivotNode.right;
+        pivotNode.right = rightChild.left;
+
+        if (rightChild.left != NIL) {
+            rightChild.left.parent = pivotNode;
         }
-        parent.parent = node.parent;
-        if (node.parent == null) {
-            this.root = parent;
-        } else if (node == node.parent.left) {
-            node.parent.left = parent;
+
+        rightChild.parent = pivotNode.parent;
+
+        if (pivotNode.parent == null) {
+            root = rightChild;
+        } else if (pivotNode == pivotNode.parent.left) {
+            pivotNode.parent.left = rightChild;
         } else {
-            node.parent.right = parent;
+            pivotNode.parent.right = rightChild;
         }
-        parent.left = node;
-        node.parent = parent;
+
+        rightChild.left = pivotNode;
+        pivotNode.parent = rightChild;
     }
 
-    private void rightRotate(RBNode node) {
-        RBNode parent = node.left;
-        node.left = parent.right;
-        if (parent.right == NIL) {
-            parent.right.parent = node;
+    private void rightRotate(RBNode pivotNode) {
+        RBNode leftChild = pivotNode.left;
+        pivotNode.left = leftChild.right;
+
+        if (leftChild.right != NIL) {
+            leftChild.right.parent = pivotNode;
         }
-        parent.parent = node.parent;
-        if (node.parent == null) {
-            this.root = parent;
-        } else if (node == node.parent.right) {
-            node.parent.right = parent;
+
+        leftChild.parent = pivotNode.parent;
+
+        if (pivotNode.parent == null) {
+            root = leftChild;
+        } else if (pivotNode == pivotNode.parent.right) {
+            pivotNode.parent.right = leftChild;
         } else {
-            node.parent.left = parent;
+            pivotNode.parent.left = leftChild;
         }
-        parent.right = node;
-        node.parent = parent;
+
+        leftChild.right = pivotNode;
+        pivotNode.parent = leftChild;
     }
 
     public synchronized void insert(byte[] key, byte[] value) {
-        if (key == null)
-            return;
+        if (key == null) return;
 
-        RBNode newNode = new RBNode(key, value);
-        newNode.parent = null;
+        RBNode newNode = new RBNode(Arrays.copyOf(key, key.length),
+                Arrays.copyOf(value, value.length));
         newNode.left = NIL;
         newNode.right = NIL;
 
-        RBNode parent = null;
-        RBNode node = this.root;
+        RBNode parentNode = null;
+        RBNode currentNode = root;
 
-
-        while (node != NIL) {
-            parent = node;
-            if (Arrays.compare(newNode.key, node.key) < 0) {
-                node = node.left;
+        while (currentNode != NIL) {
+            parentNode = currentNode;
+            if (Arrays.compare(newNode.key, currentNode.key) < 0) {
+                currentNode = currentNode.left;
             } else {
-                node = node.right;
+                currentNode = currentNode.right;
             }
         }
 
-        newNode.parent = parent;
-        if (parent == null) {
+        newNode.parent = parentNode;
+        if (parentNode == null) {
             root = newNode;
-        } else if (Arrays.compare(newNode.key, parent.key) < 0) {
-            parent.left = newNode;
+        } else if (Arrays.compare(newNode.key, parentNode.key) < 0) {
+            parentNode.left = newNode;
         } else {
-            parent.right = newNode;
+            parentNode.right = newNode;
         }
 
         if (newNode.parent == null) {
@@ -111,48 +117,47 @@ public class ThreadSafeTree {
             return;
         }
 
-        fixInsert(newNode);
+        fixInsertion(newNode);
     }
 
-    private void fixInsert(RBNode node) {
-        RBNode parent;
-        while (node.parent.color == Color.RED) {
-            if (node.parent == node.parent.parent.right) {
-                parent = node.parent.parent.left;
-                if (parent.color == Color.RED) {
-                    parent.color = Color.BLACK;
-                    node.parent.color = Color.BLACK;
-                    node.parent.parent.color = Color.RED;
-                    node = node.parent.parent;
+    private void fixInsertion(RBNode newNode) {
+        while (newNode.parent != null && newNode.parent.color == Color.RED) {
+            if (newNode.parent == newNode.parent.parent.left) {
+                RBNode uncle = newNode.parent.parent.right;
+
+                if (uncle.color == Color.RED) {
+                    newNode.parent.color = Color.BLACK;
+                    uncle.color = Color.BLACK;
+                    newNode.parent.parent.color = Color.RED;
+                    newNode = newNode.parent.parent;
                 } else {
-                    if (node == node.parent.left) {
-                        node = node.parent;
-                        rightRotate(node);
+                    if (newNode == newNode.parent.right) {
+                        newNode = newNode.parent;
+                        leftRotate(newNode);
                     }
-                    node.parent.color = Color.BLACK;
-                    node.parent.parent.color = Color.RED;
-                    leftRotate(node.parent.parent);
+                    newNode.parent.color = Color.BLACK;
+                    newNode.parent.parent.color = Color.RED;
+                    rightRotate(newNode.parent.parent);
                 }
             } else {
-                parent = node.parent.parent.right;
-                if (parent.color == Color.RED) {
-                    parent.color = Color.BLACK;
-                    node.parent.color = Color.BLACK;
-                    node.parent.parent.color = Color.RED;
-                    node = node.parent.parent;
+                RBNode uncle = newNode.parent.parent.left;
+
+                if (uncle.color == Color.RED) {
+                    newNode.parent.color = Color.BLACK;
+                    uncle.color = Color.BLACK;
+                    newNode.parent.parent.color = Color.RED;
+                    newNode = newNode.parent.parent;
                 } else {
-                    if (node == node.parent.right) {
-                        node = node.parent;
-                        leftRotate(node);
+                    if (newNode == newNode.parent.left) {
+                        newNode = newNode.parent;
+                        rightRotate(newNode);
                     }
-                    node.parent.color = Color.BLACK;
-                    node.parent.parent.color = Color.RED;
-                    rightRotate(node.parent.parent);
+                    newNode.parent.color = Color.BLACK;
+                    newNode.parent.parent.color = Color.RED;
+                    leftRotate(newNode.parent.parent);
                 }
             }
-            if (node == root) {
-                break;
-            }
+            if (newNode == root) break;
         }
         root.color = Color.BLACK;
     }
@@ -160,15 +165,15 @@ public class ThreadSafeTree {
     public synchronized byte[] get(byte[] key) {
         if (key == null) return null;
 
-        RBNode current = root;
-        while (current != NIL) {
-            int cmp = Arrays.compare(key, current.key);
-            if (cmp == 0) {
-                return Arrays.copyOf(current.value, current.value.length);
-            } else if (cmp < 0) {
-                current = current.left;
+        RBNode currentNode = root;
+        while (currentNode != NIL) {
+            int comparison = Arrays.compare(key, currentNode.key);
+            if (comparison == 0) {
+                return Arrays.copyOf(currentNode.value, currentNode.value.length);
+            } else if (comparison < 0) {
+                currentNode = currentNode.left;
             } else {
-                current = current.right;
+                currentNode = currentNode.right;
             }
         }
         return null;
