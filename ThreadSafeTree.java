@@ -24,6 +24,9 @@ public class ThreadSafeTree {
     private final RBNode NIL;
 
     public ThreadSafeTree(byte[] key, byte[] value) {
+        if (key == null)
+            throw new RuntimeException("Key value is null");
+
         NIL = new RBNode(null, null);
         NIL.color = Color.BLACK;
         root = NIL;
@@ -67,6 +70,9 @@ public class ThreadSafeTree {
     }
 
     public synchronized void insert(byte[] key, byte[] value) {
+        if (key == null)
+            return;
+
         RBNode newNode = new RBNode(key, value);
         newNode.parent = null;
         newNode.left = NIL;
@@ -147,5 +153,27 @@ public class ThreadSafeTree {
             }
         }
         root.color = Color.BLACK;
+    }
+
+    public synchronized byte[] get(byte[] key){
+        if (root == null)
+        {
+            return null;
+        }
+        else if (Arrays.equals(root.key, key))
+        {
+            return root.value;
+        }
+
+        RBNode node = root;
+        while (!Arrays.equals(node.key, key)) {
+            if (Arrays.compare(key, root.key) < 0)
+                node = node.left;
+            else
+                node = node.right;
+        }
+
+        return node.value;
+
     }
 }
