@@ -95,7 +95,7 @@ public class ThreadSafeTree {
     }
 
     public synchronized void insert(byte[] key, byte[] value) {
-        if (key == null) return;
+        if (key == null || key.length == 0) throw new RuntimeException("Key is null or empty");
 
         //checking if key already exists
         RBNode existingNode = findNode(key);
@@ -200,4 +200,44 @@ public class ThreadSafeTree {
         }
         return null;
     }
+
+
+//     Traversal functions for testing purposes
+
+    private void preOrderHelper(ThreadSafeTree.RBNode node) {
+        if (node != NIL) {
+            System.out.print(node.key[0] + " ");
+            preOrderHelper(node.left);
+            preOrderHelper(node.right);
+        }
+    }
+
+    public void preorder() {
+        preOrderHelper(this.root);
+    }
+
+    private void inOrderHelper(ThreadSafeTree.RBNode node) {
+        if (node != NIL) {
+            inOrderHelper(node.left);
+            System.out.print(node.key[0] + " ");
+            inOrderHelper(node.right);
+        }
+    }
+
+    public void inorder() {
+        inOrderHelper(this.root);
+    }
+
+    private void postOrderHelper(ThreadSafeTree.RBNode node) {
+        if (node != NIL) {
+            postOrderHelper(node.left);
+            postOrderHelper(node.right);
+            System.out.print(node.key[0] + " ");
+        }
+    }
+
+    public void postorder() {
+        postOrderHelper(this.root);
+    }
+
 }
